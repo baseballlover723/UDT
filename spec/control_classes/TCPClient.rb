@@ -1,3 +1,0 @@
-class TCPClient
-
-end
