@@ -9,3 +9,5 @@
 /tmp/
 .idea/
 ~*.xlsx
+.~lock*
+nohup.out

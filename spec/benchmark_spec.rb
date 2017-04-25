@@ -70,16 +70,17 @@ def update_time(results, close=false)
     end
   end
   begin
+    system('wmctrl -c libreoffice') and puts 'closing excel' or sleep 0.15 if close && File.exists?('.~lock.benchmark.xlsx#')
     p.serialize 'benchmark.xlsx'
   rescue
-    if close
+    if close && ENV['BASH_ON_UBUNTU_ON_WINDOWS']
       puts 'closing excel'
       system 'cmd.exe /c taskkill /IM excel.exe'
       sleep 0.05
       begin
         p.serialize 'benchmark.xlsx'
       rescue
-        sleep 0.05
+        sleep 0.15
         p.serialize 'benchmark.xlsx'
       end
     end
@@ -116,6 +117,6 @@ describe 'Benchmark' do
     update_time results, true
     file_to_open = "./benchmark.xlsx"
     puts 'opening excel'
-    system "cmd.exe /c start #{file_to_open}"
+    system ENV['BASH_ON_UBUNTU_ON_WINDOWS'] ? "cmd.exe /c start #{file_to_open}" : "nohup xdg-open #{file_to_open} &"
   end
 end
