@@ -4,12 +4,10 @@ class TCPClient
   include Client
   @socket
   @out_dir
-  @in_dir
 
   def initialize(host, port)
 
-    @out_dir = './test_files/'
-    @in_dir = './files_transferred_back/'
+    @out_dir = './files_to_transfer/'
 
     @cannot_start = false
 
@@ -37,18 +35,25 @@ class TCPClient
         return false
       end
 
-      file = File.open(file_path, 'r')
+      total_file_contents = ''
 
-      total_file_contents = file.read
+      begin
+        file = File.open(file_path, 'r')
+        total_file_contents = file.read
+      rescue
+        @socket.close
+        return false
+      end
 
-      @socket.puts(total_file_contents)
+      @socket.write(total_file_contents)
 
       @socket.close
       return true
 
     rescue
-      @socket.close
-      return false
+
+      raise RuntimeError, 'TCP connection got borked hard'
+
     end
 
   end

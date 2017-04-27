@@ -1,7 +1,7 @@
+require 'socket'
+
 class TCPControlServer
-
   include Server
-
   @server
   def initialize(port)
 
@@ -17,9 +17,9 @@ class TCPControlServer
 
     begin
 
-      loop do
+      while (content = conn.recv(1048)) != ''
 
-        total_content += conn.recv(1048)
+        total_content += content
 
       end
 
@@ -28,8 +28,7 @@ class TCPControlServer
 
     rescue
 
-      conn.close
-      return total_content
+      raise RuntimeError, 'TCP connection got borked hard'
 
     end
 
