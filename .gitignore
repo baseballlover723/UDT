@@ -8,3 +8,6 @@
 /spec/reports/
 /tmp/
 .idea/
+~*.xlsx
+.~lock*
+nohup.out
