@@ -1,6 +1,6 @@
 require 'socket'
 
-class TCPClient
+class TcpControlClient
   include Client
   @socket
   @out_dir
@@ -8,35 +8,18 @@ class TCPClient
   def initialize(host, port)
 
     @out_dir = './files_to_transfer/'
-
-    @cannot_start = false
-
-    begin
-      @socket = TCPSocket.new(host, port)
-    rescue
-      @cannot_start = true
-      puts('Could not make connection')
-    end
+    @socket = TCPSocket.new(host, port)
 
   end
 
   def send(file_name)
-
     begin
-
-      if @cannot_start
-        return false
-      end
-
       file_path = @out_dir + file_name
-
       unless File.exists?(file_path)
         @socket.close
-        return false
+        raise RuntimeError, 'File does not exits'
       end
-
       total_file_contents = ''
-
       begin
         file = File.open(file_path, 'r')
         total_file_contents = file.read
@@ -44,18 +27,12 @@ class TCPClient
         @socket.close
         return false
       end
-
       @socket.write(total_file_contents)
-
       @socket.close
       return true
-
     rescue
-
+      @socket.close
       raise RuntimeError, 'TCP connection got borked hard'
-
     end
-
   end
-
 end
