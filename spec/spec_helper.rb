@@ -3,7 +3,6 @@ require "udt"
 $LOAD_PATH.unshift File.expand_path("../control_classes", __FILE__)
 require "client"
 require "server"
-require "tcp_control_server"
 require "tcp_control_client"
 require "udp_server"
 require "udp_client"

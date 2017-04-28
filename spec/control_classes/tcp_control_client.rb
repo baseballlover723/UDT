@@ -2,18 +2,15 @@ require 'socket'
 
 class TCPControlClient
   include Client
+  include Server
   @socket
-  @out_dir
 
   def initialize(host, port)
-    @out_dir = './files_to_transfer/'
     @socket = TCPSocket.new(host, port)
   end
 
-  def send(file_name)
+  def send(file_path)
     begin
-      file_path = @out_dir + file_name
-
       unless File.exists?(file_path)
         @socket.close
         raise Exception, 'File does not exist'
@@ -29,10 +26,25 @@ class TCPControlClient
       end
 
       @socket.write(total_file_contents)
-      @socket.close
+      @socket.close_write
 
     rescue Exception => e
       @socket.close
+      raise e
+    end
+  end
+
+  def receive
+    conn = @socket
+    total_content = ''
+    begin
+      while (content = conn.recv(1024)) != ''
+        total_content += content
+      end
+      conn.close
+      return total_content
+    rescue Exception => e
+      conn.close
       raise e
     end
   end
