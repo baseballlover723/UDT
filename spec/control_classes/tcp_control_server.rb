@@ -17,9 +17,9 @@ class TCPControlServer
       end
       conn.close
       return total_content
-    rescue
+    rescue Exception => e
       conn.close
-      raise RuntimeError, 'TCP connection got borked hard'
+      raise e
     end
   end
 end
