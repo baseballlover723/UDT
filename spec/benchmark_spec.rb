@@ -37,7 +37,7 @@ end
 PORT = 3030
 HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 FILES = [File.new('spec/test_files/small.txt'), File.new('spec/test_files/medium.jpg')]
-PROTOCOLS = [Protocol.new('tcp', TCPControlServer, TcpControlClient), Protocol.new('udp', UDPServer, UDPClient)]
+PROTOCOLS = [Protocol.new('tcp', TCPControlServer, TCPControlClient), Protocol.new('udp', UDPServer, UDPClient)]
 
 def size(numb)
   ActiveSupport::NumberHelper.number_to_human_size(numb, {precision: 4, strip_insignificant_zeros: false})

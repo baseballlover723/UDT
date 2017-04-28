@@ -1,6 +1,6 @@
 require 'socket'
 
-class TcpControlClient
+class TCPControlClient
   include Client
   @socket
   @out_dir
