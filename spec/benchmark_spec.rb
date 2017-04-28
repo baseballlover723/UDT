@@ -88,7 +88,7 @@ def update_time(results, close=false)
 end
 
 describe 'Benchmark' do
-  it 'sends and receives a file through aws' do
+  it 'sends and receives a file through aws with tcp' do
     client = TCPControlClient.new 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com', 3030
     file_name = 'medium.jpg'
     client.send('spec/test_files/' + file_name)
