@@ -17,18 +17,19 @@ class UDPClient
     read_file(file_path, PACKET_SIZE) do |data, index|
       @socket.send(data, 0, @host, @port)
     end
+    @socket.flush
   end
 
   def receive
     connection = @socket
     if @host == 'localhost'
       connection = UDPSocket.new
-      connection.bind(nil, @port)
+      connection.bind('localhost', @port)
     end
     connection.wait_readable
     total_content = ''
     begin
-      Timeout::timeout(0.5) do
+      Timeout::timeout(0.1) do
         while content = connection.recvfrom(PACKET_SIZE)
           content = content[0]
           total_content += content
