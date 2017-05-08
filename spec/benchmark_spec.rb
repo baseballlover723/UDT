@@ -37,7 +37,7 @@ end
 PORT = 3030
 HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 FILES = [File.new('spec/test_files/small.txt'), File.new('spec/test_files/medium.jpg')]
-PROTOCOLS = [Protocol.new('tcp', TCPControlServer, TCPControlClient), Protocol.new('udp', UDPServer, UDPClient)]
+PROTOCOLS = [Protocol.new('tcp', TCPControlClient, TCPControlClient), Protocol.new('udp', UDPClient, UDPClient)]
 
 def size(numb)
   ActiveSupport::NumberHelper.number_to_human_size(numb, {precision: 4, strip_insignificant_zeros: false})
@@ -88,6 +88,12 @@ def update_time(results, close=false)
 end
 
 describe 'Benchmark' do
+  before(:each) do
+    Dir['./spec/received_files/*'].each do |file|
+      File.delete(file)
+    end
+  end
+
   it 'sends and receives a file through aws with tcp' do
     client = TCPControlClient.new 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com', 3030
     file_name = 'medium.jpg'
@@ -96,6 +102,34 @@ describe 'Benchmark' do
     File.open('spec/received_files/' + file_name, 'w') { |file| file.write(f) }
 
     expect(FileUtils.identical?('spec/test_files/' + file_name, 'spec/received_files/' + file_name)).to be_truthy, 'received file is different than sent file'
+  end
+
+  it 'sends and receives a file through aws with udp' do
+    client = UDPClient.new 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com', 3030
+    file_name = 'medium.jpg'
+    thread = Thread.new do
+      f = client.receive
+      File.open('spec/received_files/' + file_name, 'w') { |file| file.write(f) }
+    end
+
+    client.send('spec/test_files/' + file_name)
+    thread.join
+    expect(File.exist? 'spec/received_files/' + file_name).to be_truthy, 'did not create file'
+    expect(File.zero? 'spec/received_files/' + file_name).to be_falsey, 'file is empty'
+  end
+
+  it 'sends and receives a file through localhost with udp' do
+    client = UDPClient.new 'localhost', 3030
+    file_name = 'medium.jpg'
+    thread = Thread.new do
+      f = client.receive
+      File.open('spec/received_files/' + file_name, 'w') { |file| file.write(f) }
+    end
+
+    client.send('spec/test_files/' + file_name)
+    thread.join
+    expect(File.exist? 'spec/received_files/' + file_name).to be_truthy, 'did not create file'
+    expect(File.zero? 'spec/received_files/' + file_name).to be_falsey, 'file is empty'
   end
 
   results = {}
