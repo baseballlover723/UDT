@@ -57,7 +57,7 @@ HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host
 # HOSTS = [Host.new('Local', 'localhost')] #, Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 # HOSTS = [Host.new('LAN', 'overmind.party')]
 # HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-FILES = [TestFile.new('spec/test_files/small.txt', 10), TestFile.new('spec/test_files/medium.jpg', 10)]
+FILES = [TestFile.new('spec/test_files/small.txt', 100), TestFile.new('spec/test_files/medium.jpg', 100)]
 # FILES = [TestFile.new('spec/test_files/text.txt', 10)]
 PROTOCOLS = [Protocol.new('tcp', TCPControlClient, TCPControlClient), Protocol.new('udp', UDPClient, UDPClient)]
 
@@ -111,7 +111,7 @@ describe 'Benchmark' do
       begin
         File.delete(file)
       rescue Errno::EIO
-        sleep 0.01
+        sleep 0.1
         File.delete(file)
       end
     end

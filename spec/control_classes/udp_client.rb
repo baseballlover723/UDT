@@ -41,7 +41,6 @@ class UDPClient
         connection.wait_readable
       end
     rescue Timeout::Error
-      puts "FAILED!!!!!"
       return false
     end
     total_content = ''
