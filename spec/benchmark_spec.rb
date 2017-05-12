@@ -59,6 +59,7 @@ HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host
 # HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 FILES = [TestFile.new('spec/test_files/small.txt', 10), TestFile.new('spec/test_files/medium.jpg', 10)]
 # FILES = [TestFile.new('spec/test_files/medium.jpg', 10)]
+# FILES = [TestFile.new('spec/test_files/small.txt', 10)]
 PROTOCOLS = [Protocol.new('tcp', TCPControlClient, TCPControlClient), Protocol.new('udp', UDPClient, UDPClient)]
 
 def update_time(results, close=false)
@@ -119,10 +120,11 @@ describe 'Benchmark' do
 
   after(:each) do
     print "                         \r"
-    sleep 2.5
+    sleep 5
   end
 
   results = {}
+  ITERATION_SLEEP = 1.5
 
   HOSTS.each do |host|
     context "Host: #{host.name}" do
@@ -149,10 +151,10 @@ describe 'Benchmark' do
                 thread.join
               end.real
               next unless recieved_data
-              File.open('spec/received_files/' + file_name, 'w') { |file| file.write(recieved_data) }
+              File.open('spec/received_files/' + file_name, 'wb') { |file| file.write(recieved_data) }
               time += time1 + time2
               iterations += 1
-              sleep 0.75
+              sleep ITERATION_SLEEP
               expect(FileUtils.identical?('spec/test_files/' + file_name, 'spec/received_files/' + file_name)).to be_truthy, 'received file is different than sent file'
             end
 
@@ -187,10 +189,10 @@ describe 'Benchmark' do
               next unless recieved_data
               time += time1 + time2
               iterations += 1
-              File.open('spec/received_files/' + file_name, 'w') { |file| file.write(recieved_data) }
+              File.open('spec/received_files/' + file_name, 'wb') { |file| file.write(recieved_data) }
               expect(File.exist? 'spec/received_files/' + file_name).to be_truthy, 'did not create file'
               expect(File.zero? 'spec/received_files/' + file_name).to be_falsey, 'file is empty'
-              sleep 0.75
+              sleep ITERATION_SLEEP
             end
 
             results[host] = {} unless results.has_key? host
@@ -224,9 +226,9 @@ describe 'Benchmark' do
               next unless recieved_data
               time += time1 + time2
               iterations += 1
-              File.open('spec/received_files/' + file_name, 'w') { |file| file.write(recieved_data) }
+              File.open('spec/received_files/' + file_name, 'wb') { |file| file.write(recieved_data) }
               expect(FileUtils.identical?('spec/test_files/' + file_name, 'spec/received_files/' + file_name)).to be_truthy, 'received file is different than sent file'
-              sleep 0.75
+              sleep ITERATION_SLEEP
             end
 
             results[host] = {} unless results.has_key? host

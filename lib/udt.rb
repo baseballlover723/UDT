@@ -47,7 +47,7 @@ class UDT
           send_data index
         end
         time = Time.now - start
-        sleep_time = (ACK_WAIT / 2) - time
+        sleep_time = (ACK_WAIT / 1) - time
         sleep sleep_time if sleep_time > 0
       end
     end
@@ -74,13 +74,14 @@ class UDT
     packets = command[:data]
     data = {}
     acks = Set.new
+    send_command(:ready)
     thread = Thread.new do
+      (@local_hack || @udp).wait_readable
       until data.size == packets
         sleep ACK_WAIT
         send_acks! acks
       end
     end
-    send_command(:ready)
     until data.size == packets
       index, raw_data = wait_data
       print "receiving data index: #{index.to_s.yellow}, data: '#{raw_data.cyan}'\n" if @verbose
@@ -127,11 +128,13 @@ class UDT
   def wait_command(name)
     # {name: '', data: {}}
     while true
-      raw_command = @tcp.recv(PACKET_SIZE + MAX_JSON_OVERHEAD, Socket::MSG_PEEK)
+      raw_command = @tcp.recv(PACKET_SIZE + MAX_JSON_OVERHEAD, Socket::MSG_PEEK) || '' # werid multithreading json bug, sometimes is empty
       begin
         command = JSON.parse(raw_command, symbolize_names: true)
-      rescue
-        print raw_command.inspect + "\n"
+      rescue JSON::ParserError
+        print "\n#{raw_command}\n"
+        @tcp.recv(PACKET_SIZE + MAX_JSON_OVERHEAD)
+        next
       end
       if command[:name] == name
         print 'received command ' + raw_command + "\n" if @verbose
@@ -139,7 +142,6 @@ class UDT
         return command
       end
     end
-    # c
   end
 
   def wait_data
@@ -162,6 +164,7 @@ class UDT
   end
 
   def send_acks!(acks)
+    return if acks.empty?
     send_command(:ack, acks.to_a)
     acks.clear
   end
