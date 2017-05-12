@@ -18,7 +18,7 @@ end
 class UDT
   PACKET_SIZE = 1024
   MAX_JSON_OVERHEAD = 200
-  ACK_WAIT = 0.1
+  ACK_WAIT = 1.1
 
   def initialize(host, port, verbose=false)
     @verbose = verbose
@@ -84,7 +84,8 @@ class UDT
     end
     until data.size == packets
       index, raw_data = wait_data
-      print "receiving data index: #{index.to_s.yellow}, data: '#{raw_data.cyan}'\n" if @verbose
+      # print "receiving data index: #{index.to_s.yellow}, data: '#{raw_data.cyan}'\n" if @verbose
+      print "receiving data index: #{index.to_s.yellow}, data: ''}'\n" if @verbose
       data[index] = raw_data
       acks << index
     end
@@ -158,9 +159,10 @@ class UDT
   def send_data(index)
     data = @data[index]
     encoded = encode_data index, data
-    print "sending data index #{index.to_s.yellow}, data: '#{data.green}'\n" if @verbose
+    # print "sending data index #{index.to_s.yellow}, data: '#{data.green}'\n" if @verbose
+    print "sending data index #{index.to_s.yellow}, data: ''\n" if @verbose
     @udp.send(encoded, 0, @host, @port)
-    # sleep 0.10
+    sleep 0.01
   end
 
   def send_acks!(acks)
