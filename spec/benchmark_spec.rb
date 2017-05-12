@@ -54,11 +54,11 @@ end
 
 PORT = 3030
 HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-# HOSTS = [Host.new('Local', 'localhost')] #, Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
+# HOSTS = [Host.new('Local', 'localhost')]
 # HOSTS = [Host.new('LAN', 'overmind.party')]
 # HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-FILES = [TestFile.new('spec/test_files/small.txt', 100), TestFile.new('spec/test_files/medium.jpg', 100)]
-# FILES = [TestFile.new('spec/test_files/text.txt', 10)]
+FILES = [TestFile.new('spec/test_files/small.txt', 10), TestFile.new('spec/test_files/medium.jpg', 10)]
+# FILES = [TestFile.new('spec/test_files/medium.jpg', 10)]
 PROTOCOLS = [Protocol.new('tcp', TCPControlClient, TCPControlClient), Protocol.new('udp', UDPClient, UDPClient)]
 
 def update_time(results, close=false)
@@ -117,6 +117,11 @@ describe 'Benchmark' do
     end
   end
 
+  after(:each) do
+    print "                         \r"
+    sleep 2.5
+  end
+
   results = {}
 
   HOSTS.each do |host|
@@ -144,11 +149,11 @@ describe 'Benchmark' do
                 thread.join
               end.real
               next unless recieved_data
+              File.open('spec/received_files/' + file_name, 'w') { |file| file.write(recieved_data) }
               time += time1 + time2
               iterations += 1
-              File.open('spec/received_files/' + file_name, 'w') { |file| file.write(recieved_data) }
+              sleep 0.75
               expect(FileUtils.identical?('spec/test_files/' + file_name, 'spec/received_files/' + file_name)).to be_truthy, 'received file is different than sent file'
-              sleep 0.025
             end
 
             results[host] = {} unless results.has_key? host
@@ -185,13 +190,49 @@ describe 'Benchmark' do
               File.open('spec/received_files/' + file_name, 'w') { |file| file.write(recieved_data) }
               expect(File.exist? 'spec/received_files/' + file_name).to be_truthy, 'did not create file'
               expect(File.zero? 'spec/received_files/' + file_name).to be_falsey, 'file is empty'
-              sleep 0.025
+              sleep 0.75
             end
 
             results[host] = {} unless results.has_key? host
             results[host][file_name] = Result.new(host, file) unless results[host].has_key? file_name
             result = results[host][file.name]
             result.udp_time = (time.real - UDPClient::TIMEOUT * (file.iterations)) / (file.iterations)
+            update_time results
+            print "\r"
+          end
+
+          it 'correctly sends the file using UDT' do
+            file_name = file.name
+            recieved_data = nil
+            time = 0.0
+            iterations = 0
+            while iterations < file.iterations
+              clear_files
+              print "\rUDT iteration: #{iterations} / #{file.iterations}"
+              client, thread = nil
+              time1 = Benchmark.measure do
+                client = UDT.new host.address, 3030#, true
+                thread = Thread.new do
+                  recieved_data = client.receive
+                end
+              end.real
+              sleep 0.001 until thread[:ready]
+              time2 = Benchmark.measure do
+                client.send('spec/test_files/' + file_name)
+                thread.join
+              end.real
+              next unless recieved_data
+              time += time1 + time2
+              iterations += 1
+              File.open('spec/received_files/' + file_name, 'w') { |file| file.write(recieved_data) }
+              expect(FileUtils.identical?('spec/test_files/' + file_name, 'spec/received_files/' + file_name)).to be_truthy, 'received file is different than sent file'
+              sleep 0.75
+            end
+
+            results[host] = {} unless results.has_key? host
+            results[host][file_name] = Result.new(host, file) unless results[host].has_key? file_name
+            result = results[host][file.name]
+            result.udt_time = time.real / file.iterations
             update_time results
             print "\r"
           end
