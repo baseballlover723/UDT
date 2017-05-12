@@ -57,9 +57,10 @@ HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host
 # HOSTS = [Host.new('Local', 'localhost')]
 # HOSTS = [Host.new('LAN', 'overmind.party')]
 # HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-FILES = [TestFile.new('spec/test_files/small.txt', 10), TestFile.new('spec/test_files/medium.jpg', 10)]
-# FILES = [TestFile.new('spec/test_files/medium.jpg', 10)]
-# FILES = [TestFile.new('spec/test_files/small.txt', 10)]
+FILES = [TestFile.new('spec/test_files/tiny.txt', 5), TestFile.new('spec/test_files/small.jpg', 5), TestFile.new('spec/test_files/medium.png', 5)]
+# FILES = [TestFile.new('spec/test_files/small.jpg', 10)]
+# FILES = [TestFile.new('spec/test_files/tiny.txt', 10)]
+# FILES = [TestFile.new('spec/test_files/medium.png', 5)]
 PROTOCOLS = [Protocol.new('tcp', TCPControlClient, TCPControlClient), Protocol.new('udp', UDPClient, UDPClient)]
 
 def update_time(results, close=false)
