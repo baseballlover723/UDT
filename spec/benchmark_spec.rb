@@ -71,17 +71,21 @@ def update_time(results, close=false)
     title = styles.add_style :sz => 15, :b => true, :u => true
     center = styles.add_style :sz => 15, :b => true, :u => true, :alignment => {:horizontal => :center}
     default = styles.add_style :border => Axlsx::STYLE_THIN_BORDER, :alignment => {:horizontal => :center}
+    percent = styles.add_style(:format_code => '[GREEN]0.00%;-[RED]0.00%', :alignment=>{:horizontal => :left, indent: 1})
 
     wb.add_worksheet(name: 'Benchmark results') do |ws|
-      ws.add_row ['', '', 'Avg Time (sec)', '', '', 'Packet Loss', '', ''], style: center
+      ws.add_row ['', '', 'Avg Time (sec)', '', '', '% Faster', 'Packet Loss', '', ''], style: center
       ws.merge_cells ws.rows.first.cells[(2..4)]
-      ws.merge_cells ws.rows.first.cells[(5..7)]
-      ws.add_row ['Host', 'File', 'UDP', 'TCP', 'UDT', 'UDP', 'TCP', 'UDT'], style: title
+      ws.merge_cells ws.rows.first.cells[(6..8)]
+      ws.add_row ['Host', 'File', 'UDP', 'TCP', 'UDT', 'Than TCP', 'UDP', 'TCP', 'UDT'], style: title
       results.each do |host, files|
         host
         files.values.each do |result|
-          widths = [10, 30, 10, 10, 10, 9, 9, 9]
-          ws.add_row [host.name, "#{result.file.name} (#{result.file.size}) (#{result.file.iterations} times)", result.udp_time, result.tcp_time, result.udt_time, result.udp_loss, result.tcp_loss, result.udt_loss], widths: widths
+          widths = [10, 30, 10, 10, 10, 15, 9, 9, 9]
+          percentage = 0
+          percentage = (result.tcp_time / result.udt_time) - 1 if result.tcp_time && result.udt_time
+          data = [host.name, "#{result.file.name} (#{result.file.size}) (#{result.file.iterations} times)", result.udp_time, result.tcp_time, result.udt_time, percentage ,result.udp_loss, result.tcp_loss, result.udt_loss]
+          ws.add_row data, widths: widths, style: [nil, nil, nil, nil, nil, percent]
         end
         ws.add_row []
 
