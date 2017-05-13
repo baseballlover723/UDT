@@ -1,4 +1,4 @@
-require "udt/version"
+require 'v1/udt/version'
 require 'socket'
 require 'json'
 require 'colorize'
@@ -16,7 +16,7 @@ class Set
   end
 end
 
-class UDT
+class UDT_V1
   PACKET_SIZE = 1024
   MAX_JSON_OVERHEAD = 20000
   ACK_WAIT = 0.25
