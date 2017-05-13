@@ -54,13 +54,15 @@ end
 
 PORT = 3030
 HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
+HOSTS = [Host.new('Local', 'localhost'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 # HOSTS = [Host.new('Local', 'localhost')]
 # HOSTS = [Host.new('LAN', 'overmind.party')]
 # HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-# FILES = [TestFile.new('spec/test_files/tiny.txt', 5), TestFile.new('spec/test_files/small.jpg', 5), TestFile.new('spec/test_files/medium.png', 5)]
+FILES = [TestFile.new('spec/test_files/tiny.txt', 10), TestFile.new('spec/test_files/small.jpg', 10), TestFile.new('spec/test_files/medium.jpg', 5)]
+# FILES = [TestFile.new('spec/test_files/tiny.txt', 5), TestFile.new('spec/test_files/small.jpg', 5)]
 # FILES = [TestFile.new('spec/test_files/small.jpg', 10)]
 # FILES = [TestFile.new('spec/test_files/tiny.txt', 10)]
-FILES = [TestFile.new('spec/test_files/medium.png', 5)]
+# FILES = [TestFile.new('spec/test_files/medium.jpg', 5)]
 PROTOCOLS = [Protocol.new('tcp', TCPControlClient, TCPControlClient), Protocol.new('udp', UDPClient, UDPClient)]
 
 def update_time(results, close=false)
@@ -122,10 +124,19 @@ describe 'Benchmark' do
       end
     end
   end
+  first = true
+
+  before(:each) do
+    print "                                                                                        \r"
+    sleep 5 unless first
+    first = false
+  end
 
   after(:each) do
-    print "                         \r"
-    sleep 5
+    Thread.list.each do |thread|
+      thread.exit unless thread == Thread.current
+    end
+    print "                                                                                        \r"
   end
 
   results = {}
@@ -218,7 +229,7 @@ describe 'Benchmark' do
               print "\rUDT iteration: #{iterations} / #{file.iterations}"
               client, thread = nil
               time1 = Benchmark.measure do
-                client = UDT.new host.address, 3030, true
+                client = UDT.new host.address, 3030#, true
                 thread = Thread.new do
                   recieved_data = client.receive
                 end
