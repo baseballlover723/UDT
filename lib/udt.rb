@@ -65,7 +65,7 @@ class UDT
           @last_acks = command[:data].size
           @last_acks = 1 if @last_acks == 0
           @congestion_control_sleep_time = ACK_WAIT / 2.0 / @last_acks
-          print "packets to send: #{@data.size} last_acks: #{@last_acks} congestion_control_sleep_time: #{@congestion_control_sleep_time}\r"# if @verbose
+          # print "packets to send: #{@data.size} last_acks: #{@last_acks} congestion_control_sleep_time: #{@congestion_control_sleep_time}\r"# if @verbose
           break if @data.empty?
         when 'fin'
           puts 'got fin, stopping sending'

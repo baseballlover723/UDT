@@ -3,6 +3,7 @@ require 'active_support'
 require 'active_support/number_helper'
 require 'benchmark'
 require 'axlsx'
+require 'axlsx_styler'
 
 Thread.abort_on_exception = true
 ActiveSupport::Deprecation.silenced = true
@@ -53,17 +54,18 @@ class Result
 end
 
 PORT = 3030
-HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-HOSTS = [Host.new('Local', 'localhost'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-# HOSTS = [Host.new('Local', 'localhost')]
+# HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
+# HOSTS = [Host.new('Local', 'localhost'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
+HOSTS = [Host.new('Local', 'localhost')]
 # HOSTS = [Host.new('LAN', 'overmind.party')]
 # HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-FILES = [TestFile.new('spec/test_files/tiny.txt', 10), TestFile.new('spec/test_files/small.jpg', 10), TestFile.new('spec/test_files/medium.jpg', 5)]
+# FILES = [TestFile.new('spec/test_files/tiny.txt', 10), TestFile.new('spec/test_files/small.jpg', 10), TestFile.new('spec/test_files/medium.jpg', 5)]
 # FILES = [TestFile.new('spec/test_files/tiny.txt', 5), TestFile.new('spec/test_files/small.jpg', 5)]
 # FILES = [TestFile.new('spec/test_files/small.jpg', 10)]
 # FILES = [TestFile.new('spec/test_files/tiny.txt', 10)]
-# FILES = [TestFile.new('spec/test_files/medium.jpg', 5)]
-PROTOCOLS = [Protocol.new('tcp', TCPControlClient, TCPControlClient), Protocol.new('udp', UDPClient, UDPClient)]
+FILES = [TestFile.new('spec/test_files/medium.jpg', 1)]
+VERSIONS = [UDT]
+ACK_TIMES = [0.05, 0.10, 0.15, 0.20, 0.25]
 
 def update_time(results, close=false)
   p = Axlsx::Package.new
@@ -71,23 +73,39 @@ def update_time(results, close=false)
 
   p.workbook do |wb|
     styles = wb.styles
-    title = styles.add_style :sz => 15, :b => true, :u => true
+    title = styles.add_style :sz => 15, :b => true, :u => true, :alignment => {:horizontal => :center}
     center = styles.add_style :sz => 15, :b => true, :u => true, :alignment => {:horizontal => :center}
+    box = styles.add_style(border: { style: :thick, color: 'F000000'})
     default = styles.add_style :border => Axlsx::STYLE_THIN_BORDER, :alignment => {:horizontal => :center}
-    percent = styles.add_style(:format_code => '[GREEN]0.00%;-[RED]0.00%', :alignment=>{:horizontal => :left, indent: 1})
+    percent = styles.add_style(:format_code => '[GREEN]0.00%;-[RED]0.00%', :alignment => {:horizontal => :left, indent: 1})
 
     wb.add_worksheet(name: 'Benchmark results') do |ws|
-      ws.add_row ['', '', 'Avg Time (sec)', '', '', '% Faster', 'Packet Loss', '', ''], style: center
-      ws.merge_cells ws.rows.first.cells[(2..4)]
-      ws.merge_cells ws.rows.first.cells[(6..8)]
-      ws.add_row ['Host', 'File', 'UDP', 'TCP', 'UDT', 'Than TCP', 'UDP', 'TCP', 'UDT'], style: title
+      udt_version_row = ['', '', 'Avg Time (sec)', '']
+      VERSIONS.each do |version|
+        udt_version_row += ["#{version.name} * Avg Time (sec)"] + Array.new(ACK_TIMES.size - 1, '*')
+      end
+      ws.add_row udt_version_row, style: center
+      ws.merge_cells ws.rows.first.cells[(2..3)]
+      VERSIONS.size.times do |numb|
+        start = 4 + numb * ACK_TIMES.size
+        finish = start + ACK_TIMES.size
+        ws.merge_cells ws.rows.first.cells[(start...finish)]
+      end
+      
+      title_row = ['Host', 'File', 'UDP', 'TCP']
+      VERSIONS.size.times do
+        ACK_TIMES.each do |ack_time|
+          title_row << ack_time.to_s + ' ACK'
+        end
+      end
+      ws.add_row title_row, style: title
       results.each do |host, files|
         host
         files.values.each do |result|
           widths = [10, 30, 10, 10, 10, 15, 9, 9, 9]
           percentage = 0
           percentage = (result.tcp_time / result.udt_time) - 1 if result.tcp_time && result.udt_time
-          data = [host.name, "#{result.file.name} (#{result.file.size}) (#{result.file.iterations} times)", result.udp_time, result.tcp_time, result.udt_time, percentage ,result.udp_loss, result.tcp_loss, result.udt_loss]
+          data = [host.name, "#{result.file.name} (#{result.file.size}) (#{result.file.iterations} times)", result.udp_time, result.tcp_time, result.udt_time, percentage, result.udp_loss, result.tcp_loss, result.udt_loss]
           ws.add_row data, widths: widths, style: [nil, nil, nil, nil, nil, percent]
         end
         ws.add_row []
@@ -124,6 +142,7 @@ describe 'Benchmark' do
       end
     end
   end
+
   first = true
 
   before(:each) do
@@ -146,78 +165,78 @@ describe 'Benchmark' do
     context "Host: #{host.name}" do
       FILES.each do |file|
         context "File: #{file.name} (#{file.size})" do
-          it 'correctly sends the file using TCP' do
-            file_name = file.name
-            recieved_data = nil
-            time = 0.0
-            iterations = 0
-            while iterations < file.iterations
-              clear_files
-              print "\rTCP iteration: #{iterations} / #{file.iterations}"
-              client, thread = nil
-              time1 = Benchmark.measure do
-                client = TCPControlClient.new host.address, 3030
-                thread = Thread.new do
-                  recieved_data = client.receive
-                end
-              end.real
-              sleep 0.001 until thread[:ready]
-              time2 = Benchmark.measure do
-                client.send('spec/test_files/' + file_name)
-                thread.join
-              end.real
-              next unless recieved_data
-              File.open('spec/received_files/' + file_name, 'wb') { |file| file.write(recieved_data) }
-              time += time1 + time2
-              iterations += 1
-              sleep ITERATION_SLEEP
-              expect(FileUtils.identical?('spec/test_files/' + file_name, 'spec/received_files/' + file_name)).to be_truthy, 'received file is different than sent file'
-            end
-
-            results[host] = {} unless results.has_key? host
-            results[host][file_name] = Result.new(host, file) unless results[host].has_key? file_name
-            result = results[host][file.name]
-            result.tcp_time = time.real / file.iterations
-            update_time results
-            print "\r"
-          end
-
-          it 'correctly sends the file using UDP' do
-            file_name = file.name
-            recieved_data = nil
-            time = 0.0
-            iterations = 0
-            while iterations < file.iterations
-              clear_files
-              print "\rUDP iterations: #{iterations} / #{file.iterations}"
-              client, thread = nil
-              time1 = Benchmark.measure do
-                client = UDPClient.new host.address, 3030
-                thread = Thread.new do
-                  recieved_data = client.receive
-                end
-              end.real
-              sleep 0.001 until thread[:ready]
-              time2 = Benchmark.measure do
-                client.send('spec/test_files/' + file_name)
-                thread.join
-              end.real
-              next unless recieved_data
-              time += time1 + time2
-              iterations += 1
-              File.open('spec/received_files/' + file_name, 'wb') { |file| file.write(recieved_data) }
-              expect(File.exist? 'spec/received_files/' + file_name).to be_truthy, 'did not create file'
-              expect(File.zero? 'spec/received_files/' + file_name).to be_falsey, 'file is empty'
-              sleep ITERATION_SLEEP
-            end
-
-            results[host] = {} unless results.has_key? host
-            results[host][file_name] = Result.new(host, file) unless results[host].has_key? file_name
-            result = results[host][file.name]
-            result.udp_time = (time.real - UDPClient::TIMEOUT * (file.iterations)) / (file.iterations)
-            update_time results
-            print "\r"
-          end
+          # it 'correctly sends the file using TCP' do
+          #   file_name = file.name
+          #   recieved_data = nil
+          #   time = 0.0
+          #   iterations = 0
+          #   while iterations < file.iterations
+          #     clear_files
+          #     print "\rTCP iteration: #{iterations} / #{file.iterations}"
+          #     client, thread = nil
+          #     time1 = Benchmark.measure do
+          #       client = TCPControlClient.new host.address, 3030
+          #       thread = Thread.new do
+          #         recieved_data = client.receive
+          #       end
+          #     end.real
+          #     sleep 0.001 until thread[:ready]
+          #     time2 = Benchmark.measure do
+          #       client.send('spec/test_files/' + file_name)
+          #       thread.join
+          #     end.real
+          #     next unless recieved_data
+          #     File.open('spec/received_files/' + file_name, 'wb') { |file| file.write(recieved_data) }
+          #     time += time1 + time2
+          #     iterations += 1
+          #     sleep ITERATION_SLEEP
+          #     expect(FileUtils.identical?('spec/test_files/' + file_name, 'spec/received_files/' + file_name)).to be_truthy, 'received file is different than sent file'
+          #   end
+          #
+          #   results[host] = {} unless results.has_key? host
+          #   results[host][file_name] = Result.new(host, file) unless results[host].has_key? file_name
+          #   result = results[host][file.name]
+          #   result.tcp_time = time.real / file.iterations
+          #   update_time results
+          #   print "\r"
+          # end
+          #
+          # it 'correctly sends the file using UDP' do
+          #   file_name = file.name
+          #   recieved_data = nil
+          #   time = 0.0
+          #   iterations = 0
+          #   while iterations < file.iterations
+          #     clear_files
+          #     print "\rUDP iterations: #{iterations} / #{file.iterations}"
+          #     client, thread = nil
+          #     time1 = Benchmark.measure do
+          #       client = UDPClient.new host.address, 3030
+          #       thread = Thread.new do
+          #         recieved_data = client.receive
+          #       end
+          #     end.real
+          #     sleep 0.001 until thread[:ready]
+          #     time2 = Benchmark.measure do
+          #       client.send('spec/test_files/' + file_name)
+          #       thread.join
+          #     end.real
+          #     next unless recieved_data
+          #     time += time1 + time2
+          #     iterations += 1
+          #     File.open('spec/received_files/' + file_name, 'wb') { |file| file.write(recieved_data) }
+          #     expect(File.exist? 'spec/received_files/' + file_name).to be_truthy, 'did not create file'
+          #     expect(File.zero? 'spec/received_files/' + file_name).to be_falsey, 'file is empty'
+          #     sleep ITERATION_SLEEP
+          #   end
+          #
+          #   results[host] = {} unless results.has_key? host
+          #   results[host][file_name] = Result.new(host, file) unless results[host].has_key? file_name
+          #   result = results[host][file.name]
+          #   result.udp_time = (time.real - UDPClient::TIMEOUT * (file.iterations)) / (file.iterations)
+          #   update_time results
+          #   print "\r"
+          # end
 
           it 'correctly sends the file using UDT' do
             file_name = file.name
@@ -229,7 +248,7 @@ describe 'Benchmark' do
               print "\rUDT iteration: #{iterations} / #{file.iterations}"
               client, thread = nil
               time1 = Benchmark.measure do
-                client = UDT.new host.address, 3030#, true
+                client = UDT.new host.address, 3030 #, true
                 thread = Thread.new do
                   recieved_data = client.receive
                 end
