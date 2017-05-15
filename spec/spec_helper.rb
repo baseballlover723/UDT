@@ -1,5 +1,5 @@
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
-require "udt"
+$LOAD_PATH.unshift File.expand_path("../../lib/v1", __FILE__)
+require "udt_v1"
 $LOAD_PATH.unshift File.expand_path("../control_classes", __FILE__)
 require "client"
 require "server"

@@ -1,4 +1,4 @@
-require "udt/version"
+require 'v1/udt/version'
 require 'socket'
 require 'json'
 require 'colorize'
@@ -16,7 +16,7 @@ class Set
   end
 end
 
-class UDT
+class UDT_V1
   PACKET_SIZE = 1024
   MAX_JSON_OVERHEAD = 20000
   ACK_WAIT = 0.25
@@ -65,7 +65,7 @@ class UDT
           @last_acks = command[:data].size
           @last_acks = 1 if @last_acks == 0
           @congestion_control_sleep_time = ACK_WAIT / 2.0 / @last_acks
-          print "packets to send: #{@data.size} last_acks: #{@last_acks} congestion_control_sleep_time: #{@congestion_control_sleep_time}\r"# if @verbose
+          # print "packets to send: #{@data.size} last_acks: #{@last_acks} congestion_control_sleep_time: #{@congestion_control_sleep_time}\r"# if @verbose
           break if @data.empty?
         when 'fin'
           puts 'got fin, stopping sending'

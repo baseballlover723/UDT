@@ -1,7 +1,7 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'udt/version'
+require 'v1/udt/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "udt"
@@ -34,5 +34,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "activesupport", "~> 5.0"
   spec.add_development_dependency "axlsx", "~> 2.0"
+  spec.add_development_dependency "axlsx_styler", "~> 0.1"
   spec.add_development_dependency "colorize", "~> 0.8"
 end
