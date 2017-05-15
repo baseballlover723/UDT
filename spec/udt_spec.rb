@@ -1,7 +1,7 @@
 require "spec_helper"
 
-describe Udt do
+describe UDT do
   it "has a version number" do
-    expect(Udt::VERSION).not_to be nil
+    expect(UDT::VERSION).not_to be nil
   end
 end

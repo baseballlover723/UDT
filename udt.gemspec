@@ -5,7 +5,7 @@ require 'udt/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "udt"
-  spec.version       = Udt::VERSION
+  spec.version       = UDT::VERSION
   spec.authors       = ["Philip Ross"]
   spec.email         = ["rosspa@rose-hulman.edu"]
 
@@ -34,4 +34,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "activesupport", "~> 5.0"
   spec.add_development_dependency "axlsx", "~> 2.0"
+  spec.add_development_dependency "colorize", "~> 0.8"
 end

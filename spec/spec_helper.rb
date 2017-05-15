@@ -5,3 +5,6 @@ require "client"
 require "server"
 require "tcp_control_client"
 require "udp_client"
+RSpec.configure do |c|
+  c.fail_fast = true
+end
