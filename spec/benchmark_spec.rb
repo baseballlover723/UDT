@@ -93,18 +93,20 @@ class Result
 end
 
 PORT = 3030
-# HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-HOSTS = [Host.new('Local', 'localhost'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
+HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
+# HOSTS = [Host.new('Local', 'localhost'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 # HOSTS = [Host.new('Local', 'localhost')]
 # HOSTS = [Host.new('LAN', 'overmind.party')]
 # HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-FILES = [TestFile.new('spec/test_files/tiny.txt', 10), TestFile.new('spec/test_files/small.jpg', 10), TestFile.new('spec/test_files/medium.jpg', 5)]
+FILES = [TestFile.new('spec/test_files/tiny.txt', 5), TestFile.new('spec/test_files/small.jpg', 5), TestFile.new('spec/test_files/medium.jpg', 3)]
 # FILES = [TestFile.new('spec/test_files/tiny.txt', 5), TestFile.new('spec/test_files/small.jpg', 5)]
 # FILES = [TestFile.new('spec/test_files/small.jpg', 10)]
 # FILES = [TestFile.new('spec/test_files/tiny.txt', 10)]
 # FILES = [TestFile.new('spec/test_files/medium.jpg', 1)]
-VERSIONS = [UDT_V1]
-ACK_TIMES = [0.05, 0.10, 0.15, 0.20, 0.25]
+VERSIONS = [UDT_V1,  UDT_V2]
+# ACK_TIMES = [0.05, 0.10, 0.15, 0.20, 0.25]
+ACK_TIMES = [0.05, 0.25]
+# ACK_TIMES = [0.05]
 
 def update_time(results, close=false)
   p = Axlsx::Package.new
@@ -130,7 +132,7 @@ def update_time(results, close=false)
       ws.add_row udt_version_row, style: center
       ws.merge_cells ws.rows.first.cells[(2..3)]
       VERSIONS.size.times do |numb|
-        start = 4 + numb * (ACK_TIMES.size + 1)
+        start = 4 + numb * (ACK_TIMES.size + 3)
         finish = start + ACK_TIMES.size
         ws.merge_cells ws.rows.first.cells[(start...finish)]
       end
@@ -184,7 +186,7 @@ def update_time(results, close=false)
       y_end = ws.rows.size - 1
       ws.add_border "C#{y_start}:D#{y_end}", {style: :thick}
       VERSIONS.size.times do |numb|
-        start_offset = numb * ACK_TIMES.size
+        start_offset = numb * (ACK_TIMES.size + 3)
         x_start = 'E'
         start_offset.times { x_start = x_start.next}
 
@@ -231,7 +233,7 @@ describe 'Benchmark' do
 
   before(:each) do
     print "                                                                                        \r"
-    sleep 1.5 unless first
+    sleep 1.0 unless first
     first = false
   end
 
@@ -336,7 +338,7 @@ describe 'Benchmark' do
                     print "\rUDT (#{ack_time} ACK time) iteration: #{iterations} / #{file.iterations}"
                     client, thread = nil
                     time1 = Benchmark.measure do
-                      client = udt_class.new host.address, 3030 #, true
+                      client = udt_class.new host.address, 3030#, true
                       thread = Thread.new do
                         recieved_data = client.receive
                       end
