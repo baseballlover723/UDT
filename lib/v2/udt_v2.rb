@@ -62,7 +62,6 @@ class UDT_V2
     read_file file_path, PACKET_SIZE do |chunk, index|
       @data[index] = chunk
     end
-    @packets = @data.size.to_s.ljust(6, ' ')
     @congestion_control_sleep_time = ACK_WAIT * 100.0 / @data.size
     send_command(:srt, @data.size)
     thread = Thread.new do
@@ -95,16 +94,12 @@ class UDT_V2
           break
       end
     end
+    @local_hack.close if @host == 'localhost'
   end
 
   def receive
-    thread = Thread.current
-    thread[:ready] = false
-    Thread.new do
-      sleep 0.01
-      thread[:ready] = true
-    end
     command_name, packets = wait_command 'srt'
+    # packets_str = packets.to_s.ljust(6, ' ')
     data = {}
     acks = Set.new
     send_command(:rdy)
@@ -115,19 +110,26 @@ class UDT_V2
         send_acks! acks
       end
     end
-    print ' packet numb: 0     /' + @packets
+    # print ' packet numb: 0     /' + packets_str
+    # print_counter = 0
     until data.size == packets
+      # print_counter += 1
       index, raw_data = wait_data
 
       # print "receiving data index: #{index.to_s.yellow}, data: '#{raw_data.cyan}'\n" if @verbose
       # print "receiving data index: #{index.to_s.yellow}, data: ''}'\n" if @verbose
       data[index] = raw_data
-      print "\b\b\b\b\b\b\b\b\b\b\b\b\b"
-      print "#{(data.size).to_s.rjust(6, ' ')}/#{@packets}"
+      # if print_counter == 100
+      #   print_counter = 0
+      #   print "\b\b\b\b\b\b\b\b\b\b\b\b\b"
+      #   print "#{(data.size).to_s.rjust(6, ' ')}/#{packets_str}"
+      # end
       @acks_mutex.synchronize do
         acks << index
       end
     end
+    # print "\b\b\b\b\b\b\b\b\b\b\b\b\b"
+    # print "#{(data.size).to_s.rjust(6, ' ')}/#{packets_str}"
     send_acks! acks
     thread.exit
     send_command(:fin)

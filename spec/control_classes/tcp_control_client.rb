@@ -21,12 +21,6 @@ class TCPControlClient
   def receive
     conn = @socket
     total_content = ''
-    thread = Thread.current
-    thread[:ready] = false
-    Thread.new do
-      sleep 0.01
-      thread[:ready] = true
-    end
     conn.wait_readable
     while (content = conn.recv(PACKET_SIZE)) != ''
       total_content += content

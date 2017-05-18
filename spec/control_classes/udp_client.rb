@@ -36,12 +36,6 @@ class UDPClient
       connection = UDPSocket.new
       connection.bind('localhost', @port)
     end
-    thread = Thread.current
-    thread[:ready] = false
-    Thread.new do
-      sleep 0.01
-      thread[:ready] = true
-    end
     begin
       Timeout::timeout(2) do
         connection.wait_readable

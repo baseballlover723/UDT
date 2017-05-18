@@ -73,15 +73,10 @@ class UDT_V1
           break
       end
     end
+    @local_hack.close if @host == 'localhost'
   end
 
   def receive
-    thread = Thread.current
-    thread[:ready] = false
-    Thread.new do
-      sleep 0.01
-      thread[:ready] = true
-    end
     command = wait_command 'start'
     packets = command[:data]
     data = {}
