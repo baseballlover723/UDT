@@ -14,6 +14,7 @@ class Set
   def to_s
     to_a.to_s
   end
+
   def to_ranges
     array = self.to_a.sort
     ranges = []
@@ -36,7 +37,7 @@ class Set
 end
 
 class UDT_V2
-  PACKET_SIZE = 1024
+  PACKET_SIZE = 1468 # ethernet MTU is 1500, Max datagram size is 1472, -4 to allow for 4 bytes at the front to indicate the index
   MAX_JSON_OVERHEAD = 20000
   ACK_WAIT = 0.25
 
@@ -55,11 +56,13 @@ class UDT_V2
     print "\n" if @verbose
   end
 
+  # max number of bytes that it can send is 6,305,011,990,528 (5,872 GB)
   def send(file_path)
     @data = {}
     read_file file_path, PACKET_SIZE do |chunk, index|
       @data[index] = chunk
     end
+    @packets = @data.size.to_s.ljust(6, ' ')
     @congestion_control_sleep_time = ACK_WAIT * 100.0 / @data.size
     send_command(:srt, @data.size)
     thread = Thread.new do
@@ -112,11 +115,15 @@ class UDT_V2
         send_acks! acks
       end
     end
+    print ' packet numb: 0     /' + @packets
     until data.size == packets
       index, raw_data = wait_data
+
       # print "receiving data index: #{index.to_s.yellow}, data: '#{raw_data.cyan}'\n" if @verbose
       # print "receiving data index: #{index.to_s.yellow}, data: ''}'\n" if @verbose
       data[index] = raw_data
+      print "\b\b\b\b\b\b\b\b\b\b\b\b\b"
+      print "#{(data.size).to_s.rjust(6, ' ')}/#{@packets}"
       @acks_mutex.synchronize do
         acks << index
       end
@@ -152,12 +159,14 @@ class UDT_V2
   end
 
   def encode_data(index, raw_data)
-    "#{index}|#{raw_data}"
+    binary_index = [index].pack('N')
+    "#{binary_index}#{raw_data}"
   end
 
   def decode_data(encoded)
-    decoded = encoded.partition '|'
-    return decoded[0].to_i, decoded[2]
+    index = encoded[0..3].unpack('N')[0]
+    raw_data = encoded[4..-1]
+    return index, raw_data
   end
 
   # use ranges and custom format
