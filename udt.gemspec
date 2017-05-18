@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'v1/udt/version'
+require 'v2/udt/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "udt"
-  spec.version       = UDT::VERSION
+  spec.version       = UDT_V2::VERSION
   spec.authors       = ["Philip Ross"]
   spec.email         = ["rosspa@rose-hulman.edu"]
 

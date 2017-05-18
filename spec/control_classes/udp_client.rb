@@ -4,7 +4,7 @@ require 'timeout'
 class UDPClient
   include Client
   include Server
-  PACKET_SIZE = 1024
+  PACKET_SIZE = 1472
   TIMEOUT = 0.5
 
   def initialize(host, port)
@@ -16,9 +16,15 @@ class UDPClient
 
   def send(file_path)
     max = 0
+    size = (File.size(file_path) / PACKET_SIZE.to_f).ceil
+    size = size.to_s.ljust(6, ' ')
+    # print ' packet numb: 0     /' + size
+    
     read_file(file_path, PACKET_SIZE) do |data, index|
       max = index
       @socket.send(data, 0, @host, @port)
+      # print "\b\b\b\b\b\b\b\b\b\b\b\b\b"
+      # print "#{(index+1).to_s.rjust(6, ' ')}/#{size}"
     end
     @socket.flush unless @socket.closed?
     max + 1
@@ -29,12 +35,6 @@ class UDPClient
     if @host == 'localhost'
       connection = UDPSocket.new
       connection.bind('localhost', @port)
-    end
-    thread = Thread.current
-    thread[:ready] = false
-    Thread.new do
-      sleep 0.01
-      thread[:ready] = true
     end
     begin
       Timeout::timeout(2) do
