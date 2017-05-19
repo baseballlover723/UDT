@@ -95,9 +95,9 @@ end
 PORT = 3030
 # HOSTS = [Host.new('Local', 'localhost'), Host.new('LAN', 'overmind.party'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 # HOSTS = [Host.new('Local', 'localhost'), Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
-HOSTS = [Host.new('Local', 'localhost')]
+# HOSTS = [Host.new('Local', 'localhost')]
 # HOSTS = [Host.new('LAN', 'overmind.party')]
-# HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
+HOSTS = [Host.new('Internet', 'ec2-54-179-177-145.ap-southeast-1.compute.amazonaws.com')]
 FILES = [TestFile.new('spec/test_files/tiny.txt', 100), TestFile.new('spec/test_files/small.jpg', 100), TestFile.new('spec/test_files/medium.jpg', 50), TestFile.new('spec/test_files/large.mp4', 10), TestFile.new('spec/test_files/xlarge.mp4', 5)]
 # FILES = [TestFile.new('spec/test_files/tiny.txt', 10), TestFile.new('spec/test_files/small.jpg', 10), TestFile.new('spec/test_files/medium.jpg', 10), TestFile.new('spec/test_files/large.mp4', 5), TestFile.new('spec/test_files/xlarge.mp4', 3)]
 # FILES = [TestFile.new('spec/test_files/tiny.txt', 100), TestFile.new('spec/test_files/small.jpg', 100), TestFile.new('spec/test_files/medium.jpg', 50)]

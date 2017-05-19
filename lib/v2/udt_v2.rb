@@ -178,7 +178,9 @@ class UDT_V2
       cmd_name = raw_command[0..2]
       if names.include? cmd_name
         return cmd_name, nil if raw_command.size <= 3
-        data_str = raw_command[3...raw_command.index("\0")]
+        end_index = raw_command.index("\0")
+        next unless end_index
+        data_str = raw_command[3...end_index]
         print 'received command ' + cmd_name + ' : ' + data_str + "\n" if @verbose
         @tcp.recv(data_str.bytesize + 4)
         data = nil
